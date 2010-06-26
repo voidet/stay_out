@@ -3,7 +3,7 @@
 This component allows all user sessions established to be flushed if logged out. This is helpful when a user may log in across multiple browsers and computers and would want to clear all sessions across each machine. This heightens security in that once logged out, every instance is logged out.
 
 ##TODO
-This component was written very quickly and requires a lot of code cleaning up, of which I will do soon. If you have any extra functions you would like just let me know and may consider integrating them in. Otherwise feel free to fork! Also this component may get renamed to BlueBoy after: http://en.wikipedia.org/wiki/Blue_Boy_(DJ)#Remember_Me
+This basic project is in its infancy, so tests need to be written and code optimised.
 
 ##Installation
 Install the plugin:
@@ -21,7 +21,3 @@ The only method that must be called manually is to set the user log out informat
 		$this->StayOut->setLogout();
 		$this->StayOut->logout(); // or $this->Auth->logout();
 	}
-
-##TODO
-
-This basic project is in its infancy, so tests need to be written and code optimised.
