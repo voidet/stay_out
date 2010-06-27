@@ -28,6 +28,14 @@ class StayOutComponent extends Object {
 	}
 
 /**
+	* generateHash is a simple uuid to SHA1 with salt handler
+	* @return string(40)
+	*/
+	public function generateHash() {
+		return Security::hash(String::uuid(), null, true);
+	}
+
+/**
 	* startup Called after beforeFilter
 	* @return false
 	*/
@@ -35,18 +43,19 @@ class StayOutComponent extends Object {
 		$this->initializeModel();
 		if ($this->tableSupports('logout_field') && $this->Auth->user()) {
 
-			$this->Session->write($this->Auth->sessionKey.'.lastAction', date('Y-m-d H:i:s'));
-
 			if (!empty($this->Controller->data[$this->Auth->userModel])) {
+				$uuidhash = $this->generateHash();
+				$this->Session->write($this->Auth->sessionKey.'.sessionseries', $uuidhash);
+
 				$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
-				$this->userModel->saveField($this->settings['logout_field'], null);
+				$this->userModel->saveField($this->settings['logout_field'], $uuidhash);
 			}
-			$logoutTime = $this->userModel->find('first', array('conditions' => array(
+			$loggedOut = $this->userModel->find('first', array('conditions' => array(
 					$this->settings['logout_field'].' <>' => null,
 					$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
-					$this->settings['logout_field'].' <= ' => $this->Session->read($this->Auth->sessionKey.'.lastAction')), 'recursive' => -1));
+					$this->settings['logout_field'].' <> ' => $this->Session->read($this->Auth->sessionKey.'.sessionseries')), 'recursive' => -1));
 
-			if (!empty($logoutTime)) {
+			if (!empty($loggedOut)) {
 				$this->logout();
 			}
 		}
@@ -82,7 +91,7 @@ class StayOutComponent extends Object {
 	public function setLogout() {
 		if ($this->Auth->user()) {
 			$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
-			$this->userModel->saveField($this->settings['logout_field'], date('Y-m-d H:i:s'));
+			$this->userModel->saveField($this->settings['logout_field'], null);
 		}
 	}
 
