@@ -52,7 +52,7 @@ class StayOutComponent extends Object {
 					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
 				}
 			} else {
-				if ($this->Auth->user($this->settings['logout_field'])) {
+				if ($this->Auth->user()) {
 					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
 					$loggedOut = $this->userModel->find('first', array(
 						'fields' => array($this->userModel->primaryKey),
