@@ -42,7 +42,6 @@ class StayOutComponent extends Object {
 	function startup() {
 		$this->initializeModel();
 		if ($this->tableSupports('logout_field') && $this->Auth->user()) {
-
 			if (!empty($this->Controller->data[$this->Auth->userModel])) {
 				if (!$this->Auth->user($this->settings['logout_field'])) {
 					$uuidhash = $this->generateHash();
@@ -53,9 +52,18 @@ class StayOutComponent extends Object {
 					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
 				}
 			} else {
-				$loggedOut = $this->userModel->find('first', array('fields' => array($this->userModel->primaryKey), 'conditions' => array(
-						$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
-						$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.sessionseries')), 'recursive' => -1));
+				if ($this->Auth->user($this->settings['logout_field'])) {
+					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
+					$loggedOut = $this->userModel->find('first', array(
+						'fields' => array($this->userModel->primaryKey),
+						'conditions' => array(
+							$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
+							$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.sessionseries')),
+							'recursive' => -1
+						)
+					);
+				}
+
 				if (empty($loggedOut)) {
 					$this->logout();
 				}
