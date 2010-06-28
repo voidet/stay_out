@@ -44,12 +44,16 @@ class StayOutComponent extends Object {
 		if ($this->tableSupports('logout_field') && $this->Auth->user()) {
 
 			if (!empty($this->Controller->data[$this->Auth->userModel])) {
-				$uuidhash = $this->generateHash();
-				$this->Session->write($this->Auth->sessionKey.'.sessionseries', $uuidhash);
-
-				$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
-				$this->userModel->saveField($this->settings['logout_field'], $uuidhash);
+				if (!$this->Auth->user($this->settings['logout_field'])) {
+					$uuidhash = $this->generateHash();
+					$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
+					$this->userModel->saveField($this->settings['logout_field'], $uuidhash);
+					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $uuidhash);
+				} else {
+					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
+				}
 			}
+
 			$loggedOut = $this->userModel->find('first', array('conditions' => array(
 					$this->settings['logout_field'].' <>' => null,
 					$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
