@@ -52,15 +52,13 @@ class StayOutComponent extends Object {
 				} else {
 					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
 				}
-			}
-
-			$loggedOut = $this->userModel->find('first', array('conditions' => array(
-					$this->settings['logout_field'].' <>' => null,
-					$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
-					$this->settings['logout_field'].' <> ' => $this->Session->read($this->Auth->sessionKey.'.sessionseries')), 'recursive' => -1));
-
-			if (!empty($loggedOut)) {
-				$this->logout();
+			} else {
+				$loggedOut = $this->userModel->find('first', array('fields' => array($this->userModel->primaryKey), 'conditions' => array(
+						$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
+						$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.sessionseries')), 'recursive' => -1));
+				if (empty($loggedOut)) {
+					$this->logout();
+				}
 			}
 		}
 	}
