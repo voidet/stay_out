@@ -42,32 +42,34 @@ class StayOutComponent extends Object {
 	function startup() {
 		$this->initializeModel();
 		if ($this->tableSupports('logout_field') && $this->Auth->user()) {
-			if (!empty($this->Controller->data[$this->Auth->userModel])) {
-				if (!$this->Auth->user($this->settings['logout_field'])) {
-					$uuidhash = $this->generateHash();
-					$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
-					$this->userModel->saveField($this->settings['logout_field'], $uuidhash);
-					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $uuidhash);
-				} else {
-					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
+
+			if (!empty($this->Controller->data[$this->Auth->userModel]) && !$this->Auth->user($this->settings['logout_field'])) {
+				$uuidhash = $this->generateHash();
+				$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
+				$this->userModel->saveField($this->settings['logout_field'], $uuidhash);
+				$this->Session->write($this->Auth->sessionKey.'.'.$this->settings['logout_field'], $uuidhash);
+			}
+
+			if ($this->Auth->user()) {
+				//Rewrite session with Auth incase session is lost and an Auto Login script starts up
+				if ($this->Auth->user($this->settings['logout_field'])) {
+					$this->Session->write($this->Auth->sessionKey.'.'.$this->settings['logout_field'], $this->Auth->user($this->settings['logout_field']));
 				}
-			} else {
-				if ($this->Auth->user()) {
-					$this->Session->write($this->Auth->sessionKey.'.sessionseries', $this->Auth->user($this->settings['logout_field']));
-					$loggedOut = $this->userModel->find('first', array(
-						'fields' => array($this->userModel->primaryKey),
-						'conditions' => array(
-							$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
-							$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.sessionseries')),
-							'recursive' => -1
-						)
-					);
-				}
+
+				$loggedOut = $this->userModel->find('first', array(
+					'fields' => array($this->userModel->primaryKey),
+					'conditions' => array(
+						$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
+						$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.'.$this->settings['logout_field'])),
+						'recursive' => -1
+					)
+				);
 
 				if (empty($loggedOut)) {
 					$this->logout();
 				}
 			}
+
 		}
 	}
 
