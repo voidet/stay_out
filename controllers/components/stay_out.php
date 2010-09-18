@@ -22,6 +22,7 @@ class StayOutComponent extends Object {
 	function initialize(&$Controller, $settings = array()) {
 		$defaults = array(
 			'logout_field' => 'logged_out',
+			'cache' => false,
 		);
 		$this->Controller = &$Controller;
 		$this->settings = array_merge($defaults, $settings);
@@ -44,6 +45,7 @@ class StayOutComponent extends Object {
 		if ($this->tableSupports('logout_field') && $this->Auth->user()) {
 
 			if (!empty($this->Controller->data[$this->Auth->userModel]) && !$this->Auth->user($this->settings['logout_field'])) {
+				Cache::delete('StayOutUser-'.$this->Auth->user($this->userModel->primaryKey), 'StayOutCache');
 				$uuidhash = $this->generateHash();
 				$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
 				$this->userModel->saveField($this->settings['logout_field'], $uuidhash);
@@ -56,14 +58,24 @@ class StayOutComponent extends Object {
 					$this->Session->write($this->Auth->sessionKey.'.'.$this->settings['logout_field'], $this->Auth->user($this->settings['logout_field']));
 				}
 
-				$loggedOut = $this->userModel->find('first', array(
-					'fields' => array($this->userModel->primaryKey),
-					'conditions' => array(
-						$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
-						$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.'.$this->settings['logout_field'])),
-						'recursive' => -1
-					)
-				);
+				if ($this->settings['cache'] === true) {
+					$loggedOut = Cache::read('StayOutUser-'.$this->Auth->user($this->userModel->primaryKey), 'StayOutCache');
+				}
+
+				if (empty($loggedOut)) {
+					$loggedOut = $this->userModel->find('first', array(
+						'fields' => array($this->userModel->primaryKey),
+						'conditions' => array(
+							$this->userModel->primaryKey => $this->Auth->user($this->userModel->primaryKey),
+							$this->settings['logout_field'] => $this->Session->read($this->Auth->sessionKey.'.'.$this->settings['logout_field'])),
+							'recursive' => -1
+						)
+					);
+
+					if ($this->settings['cache'] === true) {
+						Cache::write('StayOutUser-'.$this->Auth->user($this->userModel->primaryKey), $loggedOut, 'StayOutCache');
+					}
+				}
 
 				if (empty($loggedOut)) {
 					$this->logout();
