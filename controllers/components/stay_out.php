@@ -114,6 +114,7 @@ class StayOutComponent extends Object {
 	*/
 	public function setLogout() {
 		if ($this->Auth->user()) {
+			Cache::delete('StayOutUser-'.$this->Auth->user($this->userModel->primaryKey), 'StayOutCache');
 			$this->userModel->id = $this->Auth->user($this->userModel->primaryKey);
 			$this->userModel->saveField($this->settings['logout_field'], null);
 		}
