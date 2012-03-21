@@ -7,7 +7,7 @@
  *
  **/
 
-class StayOutComponent extends Object {
+class StayOutComponent extends Component {
 
 /**
  * Include the neccessary components for StayOut to function with
@@ -19,12 +19,12 @@ class StayOutComponent extends Object {
 	* @param array $settings overrides default settings for fieldnames
 	* @return false
 */
-	function initialize(&$Controller, $settings = array()) {
+	function initialize($Controller, $settings = array()) {
 		$defaults = array(
 			'logout_field' => 'logged_out',
 			'cache' => false,
 		);
-		$this->Controller = &$Controller;
+		$this->Controller = $Controller;
 		$this->settings = array_merge($defaults, $settings);
 	}
 
@@ -37,11 +37,34 @@ class StayOutComponent extends Object {
 	}
 
 /**
+	* initializeModel method loads the required model if not previously loaded
+	* @return false
+	*/
+	private function __initializeModel() {
+		if (!isset($this->userModel)) {
+			$userModel = '';
+			foreach ($this->Auth->authenticate as $adapter) {
+				if (is_array($adapter) && !empty($adapter['userModel'])) {
+					$userModel = $adapter['userModel'];
+					break;
+				}
+			}
+
+			if (empty($userModel)) {
+				die('Please specify what user model to authenticate against');
+			}
+
+			App::import('Model', $userModel);
+			$this->userModel = new $userModel;
+		}
+	}
+
+/**
 	* startup Called after beforeFilter
 	* @return false
 	*/
 	function startup() {
-		$this->initializeModel();
+		$this->__initializeModel();
 		if ($this->tableSupports('logout_field') && $this->Auth->user()) {
 
 			if (!empty($this->Controller->data[$this->Auth->userModel]) && !$this->Auth->user($this->settings['logout_field'])) {
@@ -86,23 +109,11 @@ class StayOutComponent extends Object {
 	}
 
 /**
-	* initializeModel method loads the required model if not previously loaded
-	* @return false
-	*/
-	private function initializeModel() {
-		if (!isset($this->userModel)) {
-			App::import('Model', $this->Auth->userModel);
-			$this->userModel = new $this->Auth->userModel();
-		}
-	}
-
-/**
 	* tableSupports checks to see whether or not the current setup supports tracking logouts
 	* @param type specifies which field & setting is functional
 	* @return bool
 	*/
 	protected function tableSupports($type = '') {
-		$this->initializeModel();
 		if (@$this->userModel->schema($this->settings[$type]) && !empty($this->settings[$type])) {
 			return true;
 		}
